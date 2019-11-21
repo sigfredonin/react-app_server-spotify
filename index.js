@@ -159,8 +159,13 @@ app.get('/users/info', (req, res) => {
 
 // Handle logout
 app.get('/users/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
+  const id = req.query.id;
+  console.log(`Log out user, id=${id}`);
+  const userData = loggedInUsers[id];
+  delete loggedInUsers[id];
+  req.logout();
+  const redirectURL = 'http://localhost:3000';
+  res.redirect(redirectURL);
 });
 
 const PORT = process.env.PORT || 8081;
