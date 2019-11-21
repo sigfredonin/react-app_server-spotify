@@ -108,7 +108,7 @@ passport.deserializeUser((params, done) => {
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ROUTES
+// USER AUTH ROUTES
 
 // Handle login using Spotify
 app.get('/users/spotify', (req, res, next) => {
@@ -166,6 +166,18 @@ app.get('/users/logout', (req, res) => {
   req.logout();
   const redirectURL = 'http://localhost:3000';
   res.redirect(redirectURL);
+});
+
+// SPOTIFY SEARCH ROUTES
+
+// Body parser
+app.use(express.urlencoded({ extended: false }));
+
+app.post('/spotify/search', (req, res) => {
+  const id = req.query.id;
+  const { search_term } = req.body;
+  console.log(`Search id=${id}, search=${search_term}`);
+  res.send(search_term);
 });
 
 const PORT = process.env.PORT || 8081;
