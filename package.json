@@ -1,0 +1,22 @@
+{
+  "name": "server-spotify",
+  "version": "1.0.0",
+  "description": "\"Spotify passport authentication server\"",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mongoose": "^5.7.12",
+    "passport": "^0.4.0",
+    "passport-spotify": "^1.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "Sig Nin",
+  "license": "ISC"
+}
