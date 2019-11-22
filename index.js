@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const SpotifyStrategy = require('passport-spotify').Strategy;
 const keys = require('./config/keys');
+const search = require("./spotify/search");
 
 let loggedInUsers = {}; // { id: { user: <data from login> } }
 
@@ -177,7 +178,11 @@ app.post('/spotify/search', (req, res) => {
   const id = req.query.id;
   const { search_term } = req.body;
   console.log(`Search id=${id}, search=${search_term}`);
-  res.send(search_term);
+  const userData = loggedInUsers[id];
+  search(search_term, userData, (params) => {
+    const { errors, userData, searchResults } = params;
+    res.send({ errors, searchResults });
+  });
 });
 
 const PORT = process.env.PORT || 8081;
