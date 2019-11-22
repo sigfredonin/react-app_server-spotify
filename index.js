@@ -137,7 +137,7 @@ app.get('/users/spotify/redirect',
     console.log("... logged in users %O:", loggedInUsers);
     console.log("-------------------------------")
     const userString = JSON.stringify(user);
-    const redirectURL = `http://localhost:3000/profile#id=${user.user._id}`;
+    const redirectURL = `/profile#id=${user.user._id}`;
     res.redirect(redirectURL);
   }
 )
@@ -165,7 +165,7 @@ app.get('/users/logout', (req, res) => {
   const userData = loggedInUsers[id];
   delete loggedInUsers[id];
   req.logout();
-  const redirectURL = 'http://localhost:3000';
+  const redirectURL = '/';
   res.redirect(redirectURL);
 });
 
