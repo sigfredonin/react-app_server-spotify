@@ -6,10 +6,11 @@ const SpotifyStrategy = require('passport-spotify').Strategy;
 const keys = require('./config/keys');
 const search = require("./spotify/search");
 
+// LOGGED IN USERS CACHE
+
 let loggedInUsers = {}; // { id: { user: <data from login> } }
 
-const app = express();
-app.use(cors());
+// MONGO DB
 
 // MongoDB config
 const db = keys.mongo.dbURI;
@@ -20,10 +21,10 @@ mongoose.connect(db, {
   .then(() => console.log("MongoDB connected."))
   .catch(err => console.log(err));
 
-// PASSPORT
-
-// User model
+// MongoDB Spotify User model
 const SpotifyUser = require('./models/spotifyUser');
+
+// PASSPORT
 
 // Spotify Strategy
 passport.use(
@@ -105,7 +106,10 @@ passport.deserializeUser((params, done) => {
   })
 });
 
-// Passport middleware
+// EXPRESS APP
+
+const app = express();
+app.use(cors());
 app.use(passport.initialize());
 app.use(passport.session());
 
