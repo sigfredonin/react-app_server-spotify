@@ -8,7 +8,7 @@ const search = require("./spotify/search");
 
 // LOGGED IN USERS CACHE
 
-let loggedInUsers = {}; // { id: { user: <data from login> } }
+let loggedInUsers = {}; // { <id>: { user: <data from login> } }
 
 // MONGO DB
 
@@ -141,7 +141,7 @@ app.get('/users/spotify/redirect',
     console.log("... logged in users %O:", loggedInUsers);
     console.log("-------------------------------")
     const userString = JSON.stringify(user);
-    const redirectURL = `/profile#id=${user.user._id}`;
+    const redirectURL = `/profile/${user.user._id}`;
     res.redirect(redirectURL);
   }
 )
@@ -176,16 +176,17 @@ app.get('/users/logout', (req, res) => {
 // SPOTIFY SEARCH ROUTES
 
 // Body parser
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 app.post('/spotify/search', (req, res) => {
-  const id = req.query.id;
-  const { search_term } = req.body;
-  console.log(`Search id=${id}, search=${search_term}`);
-  const userData = loggedInUsers[id];
+  const { userId, search_term } = req.body;
+  console.log(`Search id=${userId}, search=${search_term}`);
+  let userData = loggedInUsers[userId];
+  userData.id = userId;
   search(search_term, userData, (params) => {
     const { errors, userData, searchResults } = params;
-    res.send({ errors, searchResults });
+    const userId = userData.id;
+    res.send({ userId, errors, searchResults });
   });
 });
 
