@@ -4,7 +4,9 @@ class Artist {
     this.id = id;
     this.name = name;
     this.spotify_url = external_urls.spotify;
-    this.image_url = images[0] ? images[0].url : "../images/person_wispy_hair.jpg";
+    if (images[0]) {
+      this.image_url = images[0].url;
+    }
     this.genres = genres;
   }
 };
