@@ -8,7 +8,9 @@ class Album {
     this.name = name;
     this.artists = artist_names;
     this.spotify_url = external_urls.spotify;
-    this.image_url = images[0].url;
+    if (images[0] != undefined) {
+      this.image_url = images[0].url;
+    };
     this.release_date = release_date;
     this.tracks = total_tracks;
   }

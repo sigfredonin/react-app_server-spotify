@@ -34,7 +34,9 @@ class Track {
     this.name = name;
     this.artists = artist_names;
     this.spotify_url = external_urls.spotify;
-    this.image_url = album.images[0].url;
+    if (album.images[0] != undefined) {
+      this.image_url = album.images[0].url;
+    };
     this.release_date = album.release_date;
     this.disc_number = disc_number;
     this.track_number = track_number;
