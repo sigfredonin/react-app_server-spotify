@@ -1,14 +1,31 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const flash = require('connect-flash');
 const passport = require('passport');
 const SpotifyStrategy = require('passport-spotify').Strategy;
 const keys = require('./config/keys');
 const search = require("./spotify/search");
 
+const DEBUG = true;
+
 // LOGGED IN USERS CACHE
 
 let loggedInUsers = {}; // { <id>: { user: <data from login> } }
+
+function verifyAuthenticated(req, res, next) {
+  const id = req.session && req.session.passport && req.session.passport.user && req.session.passport.user.id;
+  console.log(`Is user authenticated? id=${id}`);
+  if (loggedInUsers[id]) {
+    console.log("User is authenticated.");
+      return next();
+  };
+  console.log('User is NOT authenticated.');
+  req.flash('error_msg', 'Please log in to view this resource.');
+  res.status(401);
+  res.send({errors: ['User not logged in.']});
+}
 
 // MONGO DB
 
@@ -82,6 +99,10 @@ passport.use(
 
 // Serialize user identification in a session
 passport.serializeUser((user, done) => {
+  if (DEBUG) {
+    console.log("Serializing...");
+    console.log("  user: %O", user);
+  }
   done(null, { id: user.id, access: user.access });
 });
 
@@ -110,8 +131,24 @@ passport.deserializeUser((params, done) => {
 
 const app = express();
 app.use(cors());
+
+// Express sessions
+app.use(session({
+  secret: keys.session.secret,
+  resave: true,
+  saveUninitialized: true,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours, in milliseconds
+}));
+
+// Passport initialization and sessions
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Connect flash
+app.use(flash());
+
+// JSON body parser
+app.use(express.json());
 
 // USER AUTH ROUTES
 
@@ -137,52 +174,74 @@ app.get('/users/spotify/redirect',
     };
     loggedInUsers[user.user._id] = user;
     console.log("-------------------------------")
-    console.log("... user: %O", user);
+    console.log("... saved user: %O", user);
+    console.log("-------------------------------")
     console.log("... logged in users %O:", loggedInUsers);
     console.log("-------------------------------")
-    const userString = JSON.stringify(user);
-    const redirectURL = `/profile/${user.user._id}`;
-    res.redirect(redirectURL);
+    res.redirect(`/profile`);
   }
 )
 
 // Get info about logged in user
-app.get('/users/info', (req, res) => {
-  const id = req.query.id;
-  console.log(`Get user info, id=${id}`);
-  const userData = loggedInUsers[id];
-  const user = {
-    name: userData.user.name,
-    provider: userData.access.provider,
-    spotifyID: userData.user.spotifyId,
-    email: userData.user.email,
-    expires: userData.access.expires,
-    imageURL: userData.user.thumbURL
+app.get('/users/info', verifyAuthenticated, (req, res) => {
+  console.log("Get user info ...");
+  console.log("... req.user: %O", req.user);
+  console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
+  console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+  const userID = req.session.passport.user.id;
+  const userData = loggedInUsers[userID];
+  if (userData) {
+    console.log('... %O', userData);
+    const user = {
+      name: userData.user.name,
+      provider: userData.access.provider,
+      spotifyID: userData.user.spotifyId,
+      email: userData.user.email,
+      expires: userData.access.expires,
+      imageURL: userData.user.thumbURL
+    };
+    res.send(user);
+  } else {
+    console.log(`Could not find user data for user with id=${userID} ... not logged in?`);
+    req.logout();
+    console.log("... after logout ... req.user: %O", req.user);
+    console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
+    console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+    req.flash('message', 'Log in to continue ...');
+    res.status(401);
+    res.send({errors: ['User not logged in.']});
   };
-  res.send(user);
 });
 
 // Handle logout
 app.get('/users/logout', (req, res) => {
-  const id = req.query.id;
-  console.log(`Log out user, id=${id}`);
-  const userData = loggedInUsers[id];
-  delete loggedInUsers[id];
+  console.log("Log out user ...");
+  console.log("... req.user: %O", req.user);
+  console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
+  console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+  const userID = req.session && req.session.passport && req.session.passport.user.id;
+  const userData = loggedInUsers[userID];
+  if (userData) {
+    delete loggedInUsers[userID];
+  } else {
+    console.log(`Could not find user data for user with id=${userID} ... not logged in?`);
+  };
   req.logout();
-  const redirectURL = '/';
-  res.redirect(redirectURL);
+  console.log("... after logout ... req.user: %O", req.user);
+  console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
+  console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+  res.redirect('/');
 });
 
 // SPOTIFY SEARCH ROUTES
 
-// Body parser
-app.use(express.json());
-
-app.post('/spotify/search', (req, res) => {
-  const { userId, search_term } = req.body;
-  console.log(`Search id=${userId}, search=${search_term}`);
-  let userData = loggedInUsers[userId];
-  userData.id = userId;
+app.post('/spotify/search', verifyAuthenticated, (req, res) => {
+  const { search_term } = req.body;
+  console.log(`Search for: ${search_term}`);
+  console.log("... session Passport user data %O", req.session && req.session.passport && req.session.passport.user);
+  const sessionUserID = req.session.passport.user.id;
+  let userData = loggedInUsers[sessionUserID];
+  userData.id = sessionUserID;
   search(search_term, userData, (params) => {
     const { errors, userData, searchResults } = params;
     const userId = userData.id;
