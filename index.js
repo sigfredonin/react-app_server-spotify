@@ -137,16 +137,8 @@ passport.deserializeUser((params, done) => {
     console.log("  accessToken: " + params.access.accessToken);
     console.log("  refreshToken: " + params.access.refreshToken);
     console.log("  expires: " + params.access.expires);
-  }
-  SpotifyUser.findById(params.id, (err, dbUser) => {
-    // Note: dbUser is a Mongo DB object, not just the stored document!
-    if (dbUser != null) {
-      if (DEBUG) console.log("Spotify user deserialized: " + dbUser);
-      done(err, dbUser);
-    } else {
-      done(err, false, { message: 'Could not login.'});
-    }
-  })
+  };
+  done(null, params);
 });
 
 // EXPRESS APP
