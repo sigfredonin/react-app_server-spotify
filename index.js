@@ -13,6 +13,9 @@ const DEBUG = true;
 
 // TIMESTAMPS
 
+// Current UTC time in the format
+//    yyyy-mm-dd'T'HH:MM:ss'Z'
+// Example: 2019-12-18T21:14:07Z
 function time() {
   return dateFormat("isoUtcDateTime");
 };
@@ -23,7 +26,7 @@ let loggedInUsers = {}; // { <id>: { user: <data from login> } }
 
 function verifyAuthenticated(req, res, next) {
   // If user has been properly logged in, then req.user.id will exist
-  // and loggedInUers[req.user.id] will contain the cached user info.
+  // and loggedInUsers[req.user.id] will contain the cached user info.
   // Also, req.isAuthenticated() will return true.
   const id = req.user && req.user.id;
   console.log(`${time()} Is user authenticated? id=${id} ...`);
@@ -63,6 +66,7 @@ passport.use(
   },
   // passport callback function
   (accessToken, refreshToken, expires_in, profile, done) => {
+    console.log("-------------------------------")
     console.log(`${time()} Passport Spotify strategy callback ...`)
     const expires = new Date(Date.now() + (expires_in * 1000));
     console.log("Access Token: " + accessToken);
@@ -121,6 +125,7 @@ passport.use(
 // Serialize user data in a session
 passport.serializeUser((user, done) => {
   if (DEBUG) {
+    console.log("-------------------------------")
     console.log(`${time()} Serializing ...`);
     console.log("  user: %O", user);
   }
@@ -130,6 +135,7 @@ passport.serializeUser((user, done) => {
 // Access user data in a session
 passport.deserializeUser((params, done) => {
   if (DEBUG) {
+    console.log("-------------------------------")
     console.log(`${time()} Deserializing ...`);
     console.log("  params: %O", params);
     console.log("  id: " + params.id);
@@ -169,6 +175,7 @@ app.use(express.json());
 
 // Handle login using Spotify
 app.get('/users/spotify', (req, res, next) => {
+  console.log("-------------------------------")
   console.log(`${time()} Login with Spotify ...`);
   passport.authenticate('spotify', {
     scope: ['user-read-email', 'user-read-private']
@@ -190,15 +197,14 @@ app.get('/users/spotify/redirect',
       access: req.user.access     // Spotify access data
     };
     loggedInUsers[req.user.id] = loggedInUser;
-    console.log("-------------------------------")
     console.log("... logged in users %O:", loggedInUsers);
-    console.log("-------------------------------")
     res.redirect(`/profile`);
   }
 )
 
 // Get info about logged in user
 app.get('/users/info', verifyAuthenticated, (req, res) => {
+  console.log("-------------------------------")
   console.log(`${time()} Get user info ...`);
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
@@ -230,6 +236,7 @@ app.get('/users/info', verifyAuthenticated, (req, res) => {
 
 // Handle logout
 app.get('/users/logout', (req, res) => {
+  console.log("-------------------------------")
   console.log(`${time()} Log out user ...`);
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
@@ -252,6 +259,7 @@ app.get('/users/logout', (req, res) => {
 
 app.post('/spotify/search', verifyAuthenticated, (req, res) => {
   const { search_term } = req.body;
+  console.log("-------------------------------")
   console.log(`${time()} Search for: ${search_term} ...`);
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
