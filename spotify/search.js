@@ -23,7 +23,7 @@ const search = (search_term, userData, done) => {
     const header = {
       Authorization: 'Bearer ' + userData.access.accessToken
     };
-    console.log(".. %O", header);
+    console.log("... GET request header: %O", header);
     axios.get(endpointURL+'?'+queryString, {
       headers: header
     })

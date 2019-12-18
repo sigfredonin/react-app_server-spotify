@@ -29,6 +29,7 @@ function verifyAuthenticated(req, res, next) {
   // and loggedInUsers[req.user.id] will contain the cached user info.
   // Also, req.isAuthenticated() will return true.
   const id = req.user && req.user.id;
+  console.log("-------------------------------")
   console.log(`${time()} Is user authenticated? id=${id} ...`);
   if (loggedInUsers[id]) {
     console.log("User is authenticated.");
@@ -69,10 +70,10 @@ passport.use(
     console.log("-------------------------------")
     console.log(`${time()} Passport Spotify strategy callback ...`)
     const expires = new Date(Date.now() + (expires_in * 1000));
-    console.log("Access Token: " + accessToken);
-    console.log("Refresh Token: " + refreshToken);
-    console.log("Expires in: " + expires_in);
-    console.log("Expires: " + expires);
+    console.log("  Access Token: " + accessToken);
+    console.log("  Refresh Token: " + refreshToken);
+    console.log("  Expires in: " + expires_in);
+    console.log("  Expires: " + expires);
     let access = {
       provider: "spotify",
       accessToken: accessToken,
@@ -227,7 +228,7 @@ app.get('/users/info', verifyAuthenticated, (req, res) => {
     req.logout();
     console.log("... after logout ... req.user: %O", req.user);
     console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
-    console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+    console.log("... after logout ... req.isAuthenticated() = " + req.isAuthenticated());
     req.flash('message', 'Log in to continue ...');
     res.status(401);
     res.send({errors: ['User not logged in.']});
@@ -251,7 +252,7 @@ app.get('/users/logout', (req, res) => {
   req.logout();
   console.log("... after logout ... req.user: %O", req.user);
   console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
-  console.log("... req.isAuthenticated() = " + req.isAuthenticated());
+  console.log("... after logout ... req.isAuthenticated() = " + req.isAuthenticated());
   res.redirect('/');
 });
 
