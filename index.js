@@ -162,7 +162,7 @@ app.use(session({
 }));
 
 // Passport initialization and sessions
-// ... MUST follow inititalization of Express session object
+// ... MUST follow initialization of Express session object
 app.use(passport.initialize());
 app.use(passport.session());
 
