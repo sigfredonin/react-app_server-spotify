@@ -266,7 +266,7 @@ app.get('/users/logout', verifyAuthenticated, (req, res) => {
   console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
   console.log("... after logout ... req.isAuthenticated() = " + req.isAuthenticated());
   res.status(status);
-  send(response);
+  res.send(response);
 });
 
 // SPOTIFY SEARCH ROUTES
