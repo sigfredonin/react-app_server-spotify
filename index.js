@@ -28,10 +28,10 @@ function verifyAuthenticated(req, res, next) {
   // If user has been properly logged in, then req.user.id will exist
   // and loggedInUsers[req.user.id] will contain the cached user info.
   // Also, req.isAuthenticated() will return true.
-  const id = req.user && req.user.id;
+  const userID = req.user && req.user.id;
   console.log("-------------------------------")
-  console.log(`${time()} Is user authenticated? id=${id} ...`);
-  if (loggedInUsers[id]) {
+  console.log(`${time()} Is user authenticated? id=${userID} ...`);
+  if (loggedInUsers[userID]) {
     console.log("User is authenticated.");
       return next();
   };
@@ -210,7 +210,7 @@ app.get('/users/info', verifyAuthenticated, (req, res) => {
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
   console.log("... req.isAuthenticated() = " + req.isAuthenticated());
-  const userID = req.session.passport.user.id;
+  const userID = req.user && req.user.id;
   const userData = loggedInUsers[userID];
   if (userData) {
     console.log("... logged in user's cached data: %O", userData);
@@ -224,36 +224,49 @@ app.get('/users/info', verifyAuthenticated, (req, res) => {
     };
     res.send(info);
   } else {
-    console.log(`Could not find user data for user with id=${userID} ... not logged in?`);
+    // The verifyAuthenticated() middleware should have taken care of this case,
+    // so this is some kind of failure or programming error.
+    const error_message = `ERROR: Could not find user data for user with id=${userID} ... not logged in?`;
+    console.log(error_message);
     req.logout();
     console.log("... after logout ... req.user: %O", req.user);
     console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
     console.log("... after logout ... req.isAuthenticated() = " + req.isAuthenticated());
     req.flash('message', 'Log in to continue ...');
-    res.status(401);
+    res.status(500);
     res.send({errors: ['User not logged in.']});
   };
 });
 
 // Handle logout
-app.get('/users/logout', (req, res) => {
+app.get('/users/logout', verifyAuthenticated, (req, res) => {
   console.log("-------------------------------")
   console.log(`${time()} Log out user ...`);
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
   console.log("... req.isAuthenticated() = " + req.isAuthenticated());
-  const userID = req.session && req.session.passport && req.session.passport.user.id;
+  const userID = req.user && req.user.id;
   const userData = loggedInUsers[userID];
+  let status = 200;
+  let response = {};
   if (userData) {
+    // Remove the user's entry from the logged in users cache.
     delete loggedInUsers[userID];
+    response = { message: `User with id=${userID} logged out.`};
   } else {
-    console.log(`Could not find user data for user with id=${userID} ... not logged in?`);
+    // The verifyAuthenticated() middleware should have taken care of this case,
+    // so this is some kind of failure or programming error.
+    const error_message = `ERROR: Could not find user data for user with id=${userID} ... not logged in?`;
+    console.log(error_message);
+    status = 500;
+    response = { errors: [ error_message ] };
   };
   req.logout();
   console.log("... after logout ... req.user: %O", req.user);
   console.log("... after logout ... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
   console.log("... after logout ... req.isAuthenticated() = " + req.isAuthenticated());
-  res.redirect('/');
+  res.status(status);
+  send(response);
 });
 
 // SPOTIFY SEARCH ROUTES
@@ -265,7 +278,7 @@ app.post('/spotify/search', verifyAuthenticated, (req, res) => {
   console.log("... req.user: %O", req.user);
   console.log("... req.session.passport.user: %O", req.session && req.session.passport && req.session.passport.user);
   console.log("... req.isAuthenticated() = " + req.isAuthenticated());
-  const userID = req.user.id;
+  const userID = req.user && req.user.id;
   let userData = loggedInUsers[userID];
   userData.id = userID;
   search(search_term, userData, (params) => {
