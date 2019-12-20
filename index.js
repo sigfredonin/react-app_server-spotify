@@ -214,7 +214,7 @@ app.get('/users/info', verifyAuthenticated, (req, res) => {
   } else {
     // The verifyAuthenticated() middleware should have taken care of this case,
     // so this is some kind of failure or programming error.
-    const error_message = `ERROR: Could not find user data for user with id=${userID} ... not logged in?`;
+    const error_message = `ERROR: Could not find user data in session ... not logged in?`;
     console.log(error_message);
     req.logout();
     console.log("... after logout ... req.user: %O", req.user);
